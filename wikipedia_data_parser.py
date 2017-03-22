@@ -133,8 +133,7 @@ def argParser():
                         required=True)
     parser.add_argument('--debug', 
                         dest='debug', 
-                        action='store_true', 
-                        required=True)
+                        action='store_true')
     return parser;
 
         
@@ -153,7 +152,7 @@ def main():
     # load dump file names
     assert os.path.exists(args.pageTitleDir)
     dumps=[]
-    with open('all_dumps.txt') as f:
+    with open(args.allDumpTextDir) as f:
         for l in f:
             dumps.append(l.strip('\n'))
     
