@@ -111,7 +111,7 @@ def mapper(filename, remove=False):
     parser(infile,outfile,namespace,titles)
     tic.stop()
     
-    if(remove == True)
+    if(remove == True):
         subprocess.call(["rm", filename])
         subprocess.call(["rm", infile])
 

@@ -1,8 +1,8 @@
 #! /bin/bash
 #SBATCH -o R-example-%A.out
-#SBATCH -job-name=test_download
-#SBATCH -ntask=1
-#SBATCH -time=3:00:00
+#SBATCH --job-name=test_download
+#SBATCH --ntasks=1
+#SBATCH --time=3:00:00
 
 module load python
 
