@@ -1,8 +1,8 @@
 #! /bin/bash
 #SBATCH -o TEST.out
 #SBATCH --job-name=test_download
-#SBATCH --ntasks=1
-#SBATCH --time=3:00:00
+#SBATCH --ntasks=300
+#SBATCH --time=1-0
 
 module load python
 
