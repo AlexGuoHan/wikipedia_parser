@@ -134,6 +134,10 @@ def argParser():
     parser.add_argument('--debug', 
                         dest='debug', 
                         action='store_true')
+    parser.add_argument('--cpu', type=int,
+                        dest='cpu',
+                        help='number of cpu to deploy',
+                        required=True)
     return parser;
 
         
@@ -157,7 +161,8 @@ def main():
             dumps.append(l.strip('\n'))
     
     # parallelize over multiple cpu
-    pool = Pool(cpu_count())
+    assert cpu_count() >= args.cpu,'more cpu than available'
+    pool = Pool(args.cpu)
     pool.map(mapper,dumps)
     pool.join()
     pool.close()
