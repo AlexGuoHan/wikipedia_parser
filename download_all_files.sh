@@ -5,4 +5,5 @@
 #SBATCH --time=1-0
 
 mkdir all_dump_files
-wget -i all_dumps_full.txt -O all_dump_files/
+cd all_dump_files
+wget -i all_dumps_full.txt
