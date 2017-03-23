@@ -1,7 +1,5 @@
 import os
 import sys
-sys.path.append('mwxml-0.2.2')
-
 import mwxml
 import subprocess
 import pandas as pd
