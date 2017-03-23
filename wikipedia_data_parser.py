@@ -142,7 +142,8 @@ def argParser():
 
         
 def main():
-    args = argParser()
+    argparser = argParser()
+    args = argparser.parse_args()	
 
     # load titles
     if(args.pageTitleDir != None):
