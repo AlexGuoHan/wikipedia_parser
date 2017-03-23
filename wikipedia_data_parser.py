@@ -89,7 +89,7 @@ def parser(infile,outfile,namespace,page_titles,limit=None):
     df.to_csv(outfile, sep='\t', index=False)
 
 
-def mapper(filename, remove=False):
+def mapper(filename, titles, remove=False):
     namespace=1
     
     # download data
@@ -149,7 +149,7 @@ def main():
     if(args.pageTitleDir != None):
         assert os.path.exists(args.pageTitleDir)
         titles=set()
-        with open('page_titles.txt') as f:
+        with open(args.pageTitleDir) as f:
             for l in f:
                 titles.add(l.strip('\n"'))
     
@@ -163,7 +163,7 @@ def main():
     # parallelize over multiple cpu
     assert cpu_count() >= args.cpu,'more cpu than available'
     pool = Pool(args.cpu)
-    pool.map(mapper,dumps)
+    pool.map(mapper,args=(dumps, titles))
     pool.join()
     pool.close()
 
