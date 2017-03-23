@@ -166,9 +166,8 @@ if __name__ == '__main__':
 
     # parallelize over multiple cpu
     assert cpu_count() >= args.cpu,'more cpu than available'
-    poolInput = {'dumps': dumps, 'titles': titles}
     pool = Pool(args.cpu)
-    pool.map(mapper,poolInput)
+    pool.map(mapper,dumps)
     pool.join()
     pool.close()
 
