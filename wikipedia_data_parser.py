@@ -89,8 +89,10 @@ def parser(infile,outfile,namespace,page_titles,limit=None):
     df.to_csv(outfile, sep='\t', index=False)
 
 
-def mapper(filename, titles, remove=False):
+def mapper(poolInput, remove=False):
     namespace=1
+    dumps = poolInput['dumps']
+    titles = poolInput['titles']
     
     # download data
     base_url = 'https://dumps.wikimedia.org/enwiki/20161201/'
@@ -162,8 +164,9 @@ def main():
     
     # parallelize over multiple cpu
     assert cpu_count() >= args.cpu,'more cpu than available'
+    poolInput = {'dumps': dumps, 'titles': titles}
     pool = Pool(args.cpu)
-    pool.map(mapper,args=(dumps, titles))
+    pool.map(mapper,poolInput)
     pool.join()
     pool.close()
 
