@@ -131,10 +131,6 @@ def argParser():
                         dest='allDumpTextDir', 
                         help='directory to dump file names', 
                         required=True)
-    parser.add_argument('--mwxmlDir', type=str, 
-                        dest='mwxmlDir', 
-                        help='directory to mwxml', 
-                        required=True)
     parser.add_argument('--debug', 
                         dest='debug', 
                         action='store_true')
