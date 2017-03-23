@@ -89,10 +89,9 @@ def parser(infile,outfile,namespace,page_titles,limit=None):
     df.to_csv(outfile, sep='\t', index=False)
 
 
-def mapper(poolInput, remove=False):
+def mapper(filename, remove=False):
+
     namespace=1
-    dumps = poolInput['dumps']
-    titles = poolInput['titles']
     
     # download data
     base_url = 'https://dumps.wikimedia.org/enwiki/20161201/'
@@ -143,25 +142,28 @@ def argParser():
     return parser;
 
         
-def main():
+if __name__ == '__main__':
+    
     argparser = argParser()
-    args = argparser.parse_args()	
+    args = argparser.parse_args()
 
     # load titles
+    # titles are in global scope,
+    # because mapper cannot take multiple argument
     if(args.pageTitleDir != None):
         assert os.path.exists(args.pageTitleDir)
         titles=set()
         with open(args.pageTitleDir) as f:
             for l in f:
                 titles.add(l.strip('\n"'))
-    
+
     # load dump file names
     assert os.path.exists(args.pageTitleDir)
     dumps=[]
     with open(args.allDumpTextDir) as f:
         for l in f:
             dumps.append(l.strip('\n'))
-    
+
     # parallelize over multiple cpu
     assert cpu_count() >= args.cpu,'more cpu than available'
     poolInput = {'dumps': dumps, 'titles': titles}
@@ -170,6 +172,3 @@ def main():
     pool.join()
     pool.close()
 
-if __name__ == '__main__':
-    main()
-   
