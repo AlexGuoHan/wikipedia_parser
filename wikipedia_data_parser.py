@@ -89,7 +89,7 @@ def parser(infile,outfile,namespace,page_titles,limit=None):
     df.to_csv(outfile, sep='\t', index=False)
 
 
-def mapper(filename, remove=False):
+def mapper(filename, remove=True):
 
     namespace=1
     
