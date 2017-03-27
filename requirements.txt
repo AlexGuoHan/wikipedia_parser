@@ -1,2 +1,5 @@
 mwxml
 pandas
+BeautifulSoup4
+sklearn
+joblib
