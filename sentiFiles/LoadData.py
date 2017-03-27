@@ -1,15 +1,16 @@
+from __future__ import absolute_import
 import sys,os
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-sys.path.append('ClonedModel/wmModel/wiki-detox/src/modeling/')
+sys.path.append(u'ClonedModel/wmModel/wiki-detox/src/modeling/')
 
 
 # Some Helper Functions with WikiMedia
 
 
 def empirical_dist(l, w = 0.0, index = None):
-    """
+    u"""
     Compute empirical distribution over all classes
     using all labels with the same rev_id
     """
@@ -28,7 +29,7 @@ def empirical_dist(l, w = 0.0, index = None):
 
 
 def plurality(l):
-    """
+    u"""
     Take the most common label from all labels with the same rev_id.
     
     Return:
@@ -36,13 +37,13 @@ def plurality(l):
     s = an array of integers of 0 or 1
     """
     s = l.groupby(l.index).apply(lambda x:x.value_counts().index[0])
-    s.name = 'y'
+    s.name = u'y'
     return s
 
 
 
 def one_hot(y):
-    """
+    u"""
     Return:
     =======
     y_oh = an array of vectors (one-hot vectors)
@@ -57,32 +58,32 @@ def one_hot(y):
         n = y.shape[1]
 
     y_oh = np.zeros((m, n))
-    y_oh[list(range(m)), idxs] = 1
+    y_oh[range(m), idxs] = 1
     return y_oh
 
 
 
 def load_and_parse_training(data_dir, task, data_type):
-    ''' Load and Parse training Data'''
+    u''' Load and Parse training Data'''
     
     # comments is X, annotations (labels) are y
-    COMMENTS_FILE = "%s_annotated_comments.tsv" % task
-    LABELS_FILE = "%s_annotations.tsv" % task
+    COMMENTS_FILE = u"%s_annotated_comments.tsv" % task
+    LABELS_FILE = u"%s_annotations.tsv" % task
     
-    comments = pd.read_csv(os.path.join(data_dir, COMMENTS_FILE), sep = '\t', index_col = 0)
-    annotations = pd.read_csv(os.path.join(data_dir, LABELS_FILE),  sep = '\t', index_col = 0)
+    comments = pd.read_csv(os.path.join(data_dir, COMMENTS_FILE), sep = u'\t', index_col = 0)
+    annotations = pd.read_csv(os.path.join(data_dir, LABELS_FILE),  sep = u'\t', index_col = 0)
     
     # remove special newline and tab tokens
-    comments['comment'] = comments['comment'].apply(lambda x: x.replace("NEWLINE_TOKEN", " "))
-    comments['comment'] = comments['comment'].apply(lambda x: x.replace("TAB_TOKEN", " "))
+    comments[u'comment'] = comments[u'comment'].apply(lambda x: x.replace(u"NEWLINE_TOKEN", u" "))
+    comments[u'comment'] = comments[u'comment'].apply(lambda x: x.replace(u"TAB_TOKEN", u" "))
     
     # sort X
-    X = comments.sort_index()['comment'].values
+    X = comments.sort_index()[u'comment'].values
     
-    if(data_type == 'empirical'):
+    if(data_type == u'empirical'):
         labels = empirical_dist(annotations[task])
         y = labels.sort_index().values        
-    elif(data_type == 'onehot'):
+    elif(data_type == u'onehot'):
         y = plurality(annotations[task])
         
         
@@ -93,7 +94,7 @@ def load_and_parse_training(data_dir, task, data_type):
 
     
 def load_Onehot_train_test_split(task):
-    '''
+    u'''
     Load Data using Load_and_Parse_Training
         in empirical form
         and made into onehot
@@ -105,8 +106,8 @@ def load_Onehot_train_test_split(task):
     DATA: dictionary{'Training', 'Testing'}
     
     '''
-    DATA_DIR = 'TalkData/computed_dataset/'
-    [X,yEmp] = load_and_parse_training(DATA_DIR, task, 'empirical')
+    DATA_DIR = u'TalkData/computed_dataset/'
+    [X,yEmp] = load_and_parse_training(DATA_DIR, task, u'empirical')
     yOneHot = one_hot(yEmp)
     
     X_train, X_test, y_train, y_test = train_test_split(
@@ -119,15 +120,15 @@ def load_Onehot_train_test_split(task):
     DATA_TRAINING = pd.DataFrame([X_train,y_train]).T
     DATA_TESTING = pd.DataFrame([X_test,y_test]).T
     
-    DATA_TRAINING.columns = ['Text','Category']
-    DATA_TRAINING['Category'] = DATA_TRAINING['Category'].apply(
-                lambda y: 'notAttack' if y.argmax() == 0 else 'Attack')
+    DATA_TRAINING.columns = [u'Text',u'Category']
+    DATA_TRAINING[u'Category'] = DATA_TRAINING[u'Category'].apply(
+                lambda y: u'notAttack' if y.argmax() == 0 else u'Attack')
 
-    DATA_TESTING.columns = ['Text','Category']
-    DATA_TESTING['Category'] = DATA_TESTING['Category'].apply(
-                lambda y: 'notAttack' if y.argmax() == 0 else 'Attack')
+    DATA_TESTING.columns = [u'Text',u'Category']
+    DATA_TESTING[u'Category'] = DATA_TESTING[u'Category'].apply(
+                lambda y: u'notAttack' if y.argmax() == 0 else u'Attack')
     
     return {
-            'Training': DATA_TRAINING,
-            'Testing': DATA_TESTING
+            u'Training': DATA_TRAINING,
+            u'Testing': DATA_TESTING
         }

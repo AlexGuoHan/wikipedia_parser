@@ -4,7 +4,7 @@ import sys, os
 import joblib
 import pandas as pd
 
-
+import time
 from bs4 import BeautifulSoup
 from argparse import ArgumentParser
 from difflib import SequenceMatcher
@@ -49,10 +49,14 @@ def argParser():
                         dest=u'trainDataDir', 
                         help=u'directory to training data', 
                         required=True)
-    parser.add_argument(u'--dataFileDir', type=unicode, 
-                        dest=u'dataDir', 
-                        help=u'directory to data to be predicted', 
+    parser.add_argument(u'--dataFileList', type=unicode, 
+                        dest=u'dataFileList', 
+                        help=u'directory to data file list', 
                         required=True)
+    parser.add_argument(u'--dataFileDir', type=unicode, 
+                        dest=u'dataFileDir', 
+                        help=u'directory to the data',
+                        default=None)
     parser.add_argument(u'--cpu', type=int,
                         dest=u'cpu',
                         help=u'number of cpu to deploy, 0 for max',
@@ -67,6 +71,7 @@ def main():
     
     wikiModelDir = args.wikiModelDir
     trainDataDir = args.trainDataDir
+    dataFileList = args.dataFileList
     dataFileDir = args.dataFileDir
     num_cpus = args.cpu
     
@@ -76,18 +81,28 @@ def main():
     tic.go(u'LOADING MODELS')
     
     # load losgistic model
+    global logisticModel
     logisticModel = load_logistic_char_model(wikiModelDir)
     
     # load and train mlp model
+    global mlpModel 
     mlpModel = load_mlp_char_model(wikiModelDir, trainDataDir)
     
     tic.stop()
     
+    dataFiles = []
     # parallelize over multiple cpu
-    with open(dataFileDir,u'r') as f:
-            dataFiles = f.readlines()
+    with open(dataFileList,u'r') as f:
+            for line in f:
+                if(dataFileDir != None):
+                    dfile = os.path.join(dataFileDir, line.strip(u'\n'))
+                    dataFiles.append(dfile)
+                else:
+                    dfile = line.strip(u'\n')
+                    dataFiles.append(dfile)
+                assert os.path.exists(dfile), u'File Not Exist'
     assert cpu_count() >= num_cpus,u'more cpu than available'
-    if(cpu_count <= 0): num_cpus = cpu_counts()
+    if(num_cpus <= 0): num_cpus = cpu_counts()
     print u'CPU: %d' % num_cpus
     
     pool = Pool(num_cpus)
@@ -103,12 +118,14 @@ def load_apply_save(dataDir):
     # load data
     tic.go(u'LOADING & CLEANING DATA %s'%(dataDir))
     raw_data = pd.read_csv(dataDir, sep=u'\t')
-    cleaned_data = diff_and_clean(raw_data)
+    cleaned_data = clean_and_diff(raw_data)
     tic.stop()
     
     # apply two models
-    tic.go(u'APPLYING MODELS')
+    tic.go(u'APPLYING Logistic MODELS')
     cleaned_data = apply_models_DF(cleaned_data, logisticModel)
+    tic.stop()
+    tic.go(u'APPLYING MLP MODELS')
     cleaned_data = apply_models_DF(cleaned_data, mlpModel)
     tic.stop()
     
@@ -230,7 +247,7 @@ def load_training_data(trainDataDir):
                                
 
 def get_diff(old, new, char_threshold = 5, ratio_threshold = 0.5):
-    u''' find diff using exhaustive search, not recommemded'''
+    u''' find diff using exhaustive search, not recommemded '''
     # find the lines with length > threshold characters
     old_lines = [o for o in old.splitlines() if len(o) > char_threshold] 
     new_lines = [n for n in new.splitlines() if len(n) > char_threshold]
@@ -245,7 +262,7 @@ def get_diff(old, new, char_threshold = 5, ratio_threshold = 0.5):
     return u'\n'.join(diff)
 
 
-def clean_data(data, method=u'quick_2', verbose=False):
+def clean_and_diff(data, method=u'quick_2', verbose=False):
     u''' taking the diff and clean the text column
     
     Return:
