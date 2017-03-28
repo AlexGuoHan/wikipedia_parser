@@ -115,7 +115,7 @@ def load_apply_save(dataDir):
     # load data
     tic.go('LOADING & CLEANING DATA %s'%(dataDir))
     raw_data = pd.read_csv(dataDir, sep='\t')
-    [cleaned_data, cleaned_text_col] = clean_and_diff(raw_data)
+    [cleaned_data, cleaned_text_col] = clean_and_diff(raw_data, verbose=True)
     tic.stop()
     
     # apply two models
