@@ -302,7 +302,7 @@ def clean_and_diff(data, method='quick_2', verbose=False):
         
         try:
             text_diff = data.clean_text[idx]
-            delta_byte = len(data.clean_text.iloc[idx])
+            delta_byte = len(data.clean_text[idx])
             
         except KeyError:
             text_diff = ''
