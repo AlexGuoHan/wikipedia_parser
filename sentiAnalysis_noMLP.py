@@ -298,23 +298,20 @@ def clean_and_diff(data, method='quick_2', verbose=False):
     for title in titles:
         
         data_subset = data[data.title == title]
-        at_start = True
         
         try:
             text_diff = data.clean_text[idx]
             delta_byte = len(data.clean_text[idx])
             
-        except KeyError:
-            text_diff = ''
-            delta_byte = 0
+            text_diffs.append(text_diff)
+            delta_bytes.append(delta_byte)
             
-        text_diffs.append(text_diff)
-        delta_bytes.append(delta_byte)
+        except KeyError:
+            pass
         
         idx = idx + 1
-       
         
-        for idx in range(idx, idx + data_subset.shape[0] - 1):
+        for idx in range(idx, idx + data_subset.index[-1] - 1):
             
             
             # the clean_and_filter() will delete rows that have 
@@ -335,7 +332,6 @@ def clean_and_diff(data, method='quick_2', verbose=False):
             except KeyError:
                 if(verbose == True): # the new is empty, skip it
                     print('New is Empty, skipped, at %d'%idx)
-                # idx = idx + 1
                 continue
             
             
@@ -347,20 +343,19 @@ def clean_and_diff(data, method='quick_2', verbose=False):
                 if(verbose == True):
                     print('Old is EMPTY %d'%idx)
                 old = ''
-
                 
             # handle some exceptions
             
             if(type(new) is not str):
                 if(verbose == True):
                     print("text is not str: %s, changed to empty"%(new))
-                new = ''
+                continue
             if(type(old) is not str):
                 if(verbose == True):
                     print("text is not str: %s, changed to empty"%(old))
                 old = ''                
             
-            assert len(new) > 0
+            # assert len(new) > 0
             assert type(text_diff) is str
             
 
@@ -395,8 +390,6 @@ def clean_and_diff(data, method='quick_2', verbose=False):
             
             delta_bytes.append(delta_byte)
             text_diffs.append(text_diff)
-            
-            if at_start : at_start = False
             
         
         idx = idx + 1
