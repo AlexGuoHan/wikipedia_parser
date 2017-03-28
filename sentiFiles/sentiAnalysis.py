@@ -118,20 +118,26 @@ def load_apply_save(dataDir):
     # load data
     tic.go(u'LOADING & CLEANING DATA %s'%(dataDir))
     raw_data = pd.read_csv(dataDir, sep=u'\t')
-    cleaned_data = clean_and_diff(raw_data)
+    [cleaned_data, cleaned_text_col] = clean_and_diff(raw_data)
     tic.stop()
     
     # apply two models
     tic.go(u'APPLYING Logistic MODELS')
-    cleaned_data = apply_models_DF(cleaned_data, logisticModel)
+    cleaned_data = apply_models_DF(cleaned_data, 
+                                   u'logistic',
+                                   logisticModel, 
+                                   cleaned_text_col)
     tic.stop()
     tic.go(u'APPLYING MLP MODELS')
-    cleaned_data = apply_models_DF(cleaned_data, mlpModel)
+    cleaned_data = apply_models_DF(cleaned_data, 
+                                   u'mlp', 
+                                   mlpModel, 
+                                   cleaned_text_col)
     tic.stop()
     
     # save
     filename = os.path.basename(dataDir)
-    data.to_csv(u'predicted_%s'%filename)
+    cleaned_data.to_csv(u'predicted_%s'%filename)
     
     
     
@@ -276,7 +282,7 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
     assert u'text' in data.columns.tolist(), u'DataFrame format Incorrect'
     
     # use wikipedia's clean text data function
-    data = CleanTextData.clean_and_filter(data, text_col=u'text', min_words=0,  min_chars=0)
+    data = CleanTextData.clean_and_filter(data, text_col=u'text', min_words=3,  min_chars=20)
     
     # their function will produce some columns we dont need
     data[u'clean_text'] = data[u'clean_diff']
@@ -285,42 +291,66 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
     assert u'diff' not in data.columns.tolist()
     assert u'clean_diff' not in data.columns.tolist()
     
-
     
-    
-    # Diff the data
     titles = data.title.unique()
     idx = 0
+    
     # taking the diff for each title
+    # delta_byteS = a list for all ∆bytes
+    # delta_byte = ∆byte for this example
+    text_diffs = []
+    delta_bytes = []
+    
     for title in titles:
         data_subset = data[data.title == title]
-        text_diff = [data_subset.clean_text.iloc[0]]
         
-        for idx in xrange(idx, idx + data_subset.shape[0] - 1 ):
+        try:
+            text_diff = data.clean_text[idx]
+            delta_byte = len(data.clean_text.iloc[idx])
+        except KeyError:
+            text_diff = u''
+            delta_byte = 0
             
-            try:    
-                new = data_subset.clean_text[idx + 1]
-            except KeyError:
-                if(verbose == True):
-                    print u"text has deleted, changed to empty"
-                new = u''
+        idx = idx + 1
+        text_diffs.append(text_diff)
+        delta_bytes.append(delta_byte)
+        
+        for idx in xrange(idx, idx + data_subset.shape[0] - 1):
             
-            try:
-                old = data_subset.clean_text[idx]
+            
+            # the clean_and_filter() will delete rows that have 
+            #     empty entry after cleaning.
+            #     This means that the row provides no information
+            #     so leave it empty is okay
+            
+            
+            # to handle this, following rules are adopted
+            #     1. if new is empty, but old is not
+            #        just skip that row
+            #     2. if the new not empty, but old is
+            #        not skip
+            
+            
+            try: # test if new is empty
+                new = data.clean_text[idx]
             except KeyError:
+                if(verbose == True): # the new is empty, skip it
+                    print u'New is Empty, skipped'
+                idx = idx + 1
+                continue
+             
+            try: # test if old is empty
+                old = data.clean_text[idx - 1]
+            except KeyError:
+                # old is empty
+                # dont skip it, but make the old empty string
                 if(verbose == True):
-                    print u"text has deleted, changed to empty"
+                    print u'Old in EMPTY'
                 old = u''
+
                 
-                
-            try:
-                    delta_bytes = data_subset.byte[1 + idx]
-            except KeyError:
-                if(verbose == True):
-                    print u"text has deleted, changed byte to 0"
-                delta_bytes = 0
-                
-    
+            # handle some exceptions
+            assert len(new) > 0
             if(type(new) is not unicode):
                 if(verbose == True):
                     print u"text is not str: %s, changed to empty"%(new)
@@ -328,25 +358,50 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
             if(type(old) is not unicode):
                 if(verbose == True):
                     print u"text is not str: %s, changed to empty"%(old)
-                old = u''
+                old = u''                
             
-            # slow has better performance
-            # quick works okay, but definitely need improvement
-            if(method == u'slow'): 
-                text_diff.append(get_diff(old,new))
-            if(method == u'quick_1'): 
-                text_diff.append(new.replace(old,u' ',1))
-            if(method == u'quick_2'): 
-                text_diff.append(new[len(old):])
+            
 
-        # data_subset.shape[0] - 1 + 1
-        idx = idx + 2;
-        data.loc[data.title == title,u'diff_text'] = pd.Series(text_diff)
+            delta_byte = len(new) - len(old)
+            
+            if(delta_byte < 0):
+                # if ∆byte < 0, part of texts has been DELETED
+                # append a EMPTY STR
+                
+                # note text_diffS = list for all text_diff
+                # text_diff is the diff for this example
+                text_diff = u'DELETED'
+            else:
+                # get the newly appended textx
+                # here ignore the (possibly) deleted texts for simplicity
+                if(method == u'quick_2'): 
+                    text_diff = new[len(old):]
+                
+            
+                # slow has better performance
+                #     quick works okay, but definitely need improvement
+                #     slow, quick_1 has bugs that left unsolved
+                #     uncomment them if need to use
+                #
+                # if(method == 'slow'): 
+                #     text_diff.append(get_diff(old,new))
+                # if(method == 'quick_1'): 
+                #     text_diff.append(new.replace(old,' ',1))
+            
+            # update the lists
+            assert type(text_diff) is unicode
+            delta_bytes.append(delta_byte)
+            text_diffs.append(text_diff)
+        
+        idx = idx + 1
     
-    return data
+
+    data.loc[:,u'diff_clean_text'] = pd.Series(text_diffs)
+
+    return data, u'diff_clean_text'
                                
     
-def apply_models_DF(df, model_dict, col=u'clean_text'):
+def apply_models_DF(df, model_name, model_dict, cleaned_text_col):
     u''' Predict the probability of input data to be labelled
         'aggressive' or 'attack' using 
         
@@ -356,10 +411,10 @@ def apply_models_DF(df, model_dict, col=u'clean_text'):
         
     '''
     
-    texts = df[col]
+    texts = df[cleaned_text_col]
     for task,model in model_dict.items():
         scores = model.predict_proba(texts)[:,1]
-        df[u'%s_logistic_score'%(task)] = scores
+        df[u'%s_%s_score'%(task, model_name)] = scores
     return df
 
 def apply_models_text(text, model_dict):
@@ -371,7 +426,7 @@ def apply_models_text(text, model_dict):
 
     for task,model in model_dict.items():
         scores = model.predict_proba([text])[:,1]
-        print u'%s_mlp_score: %f'%(task,scores)
+        print u'%s_score: %f'%(task,scores)
     
     
     

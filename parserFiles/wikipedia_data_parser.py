@@ -61,8 +61,7 @@ def parser(infile,outfile,namespace,page_titles,limit=None):
                 
                 if(revision.text!=None):
                     text.append(revision.text)
-                    byte.append(len(revision.text)-prev)
-                    prev=len(revision.text)
+                    byte.append(len(revision.text))
                 else:
                     byte.append(0)
                     text.append('')
