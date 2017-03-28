@@ -137,7 +137,7 @@ def load_apply_save(dataDir):
     
     # save
     filename = os.path.basename(dataDir)
-    cleaned_data.to_csv(u'predicted_%s'%filename)
+    cleaned_data.to_csv(u'predicted_%s'%filename, sep=u'\t')
     
     
     
@@ -282,7 +282,7 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
     assert u'text' in data.columns.tolist(), u'DataFrame format Incorrect'
     
     # use wikipedia's clean text data function
-    data = CleanTextData.clean_and_filter(data, text_col=u'text', min_words=3,  min_chars=20)
+    data = CleanTextData.clean_and_filter(data, text_col=u'text', min_words=0,  min_chars=0, exclude_tokens=False)
     
     # their function will produce some columns we dont need
     data[u'clean_text'] = data[u'clean_diff']
@@ -302,18 +302,23 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
     delta_bytes = []
     
     for title in titles:
+        
         data_subset = data[data.title == title]
+        at_start = True
         
         try:
             text_diff = data.clean_text[idx]
             delta_byte = len(data.clean_text.iloc[idx])
+            
         except KeyError:
             text_diff = u''
             delta_byte = 0
             
-        idx = idx + 1
         text_diffs.append(text_diff)
         delta_bytes.append(delta_byte)
+        
+        idx = idx + 1
+       
         
         for idx in xrange(idx, idx + data_subset.shape[0] - 1):
             
@@ -335,22 +340,23 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
                 new = data.clean_text[idx]
             except KeyError:
                 if(verbose == True): # the new is empty, skip it
-                    print u'New is Empty, skipped'
+                    print u'New is Empty, skipped, at %d'%idx
                 idx = idx + 1
                 continue
-             
+            
+            
             try: # test if old is empty
                 old = data.clean_text[idx - 1]
             except KeyError:
                 # old is empty
                 # dont skip it, but make the old empty string
                 if(verbose == True):
-                    print u'Old in EMPTY'
-                old = u''
+                    print u'Old is EMPTY %d'%idx
+                    old = u''
 
                 
             # handle some exceptions
-            assert len(new) > 0
+            
             if(type(new) is not unicode):
                 if(verbose == True):
                     print u"text is not str: %s, changed to empty"%(new)
@@ -360,6 +366,8 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
                     print u"text is not str: %s, changed to empty"%(old)
                 old = u''                
             
+            assert len(new) > 0
+            assert type(text_diff) is unicode
             
 
             delta_byte = len(new) - len(old)
@@ -389,15 +397,24 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
                 #     text_diff.append(new.replace(old,' ',1))
             
             # update the lists
-            assert type(text_diff) is unicode
+           
+            
             delta_bytes.append(delta_byte)
             text_diffs.append(text_diff)
+            
+            if at_start : at_start = False
+            
         
         idx = idx + 1
     
-
-    data.loc[:,u'diff_clean_text'] = pd.Series(text_diffs)
-
+    for key, value in enumerate(data.index.tolist()):
+        try:
+            data.loc[value, u'diff_clean_text'] = text_diffs[key]
+            data.loc[value,u'delta_bytes'] = delta_bytes[key]
+        except IndexError:
+            print len(text_diffs), len(cleaned_data.index.tolist())
+            raise
+    
     return data, u'diff_clean_text'
                                
     

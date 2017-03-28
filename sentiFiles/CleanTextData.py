@@ -177,7 +177,7 @@ patterns =[
 
 
 
-def clean_and_filter(df, text_col, min_words=3, min_chars=20):
+def clean_and_filter(df, text_col, min_words=3, min_chars=20, exclude_tokens=False):
     t1 = time.time()
     #print('Raw:', df.shape[0])
     df[u'insertion'] = df[text_col]
@@ -185,7 +185,8 @@ def clean_and_filter(df, text_col, min_words=3, min_chars=20):
     if df.empty:
         return df
     #print('Cleaned: ', df.shape[0])
-    df = exclude_few_tokens(df, min_words)
+    if exclude_tokens :
+        df = exclude_few_tokens(df, min_words)
     #print('No Few Words: ', df.shape[0])
     df = exclude_short_strings(df, min_chars)
     #print('No Few Chars: ', df.shape[0])
