@@ -14,7 +14,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 # from keras.wrappers.scikit_learn import KerasClassifier
 
 
-import LoadData
+# import LoadData
 import CleanTextData
 
 
@@ -409,7 +409,7 @@ def clean_and_diff(data, method='quick_2', verbose=False):
             data.loc[value, 'diff_clean_text'] = text_diffs[key]
             data.loc[value,'delta_bytes'] = delta_bytes[key]
         except IndexError:
-            print(len(text_diffs), len(cleaned_data.index.tolist()))
+            print(len(text_diffs), len(data.index.tolist()))
             raise
     
     return data, 'diff_clean_text'
