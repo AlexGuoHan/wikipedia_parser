@@ -335,7 +335,7 @@ def clean_and_diff(data, method='quick_2', verbose=False):
             except KeyError:
                 if(verbose == True): # the new is empty, skip it
                     print('New is Empty, skipped, at %d'%idx)
-                idx = idx + 1
+                # idx = idx + 1
                 continue
             
             
