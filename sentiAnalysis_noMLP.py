@@ -146,17 +146,15 @@ def load_modules(wikiModelDir):
     
     global ngram
     global load_comments_and_labels, assemble_data, one_hot
-    global make_mlp, DenseTransformer
+    # global make_mlp, DenseTransformer
     global save_pipeline, load_pipeline
-    global diff_utils
     
     sys.path.append(os.path.join(wikiModelDir,u'wiki-detox/src/modeling'))
     sys.path.append(os.path.join(wikiModelDir,u'wiki-detox/src/data_generation'))
     import ngram
     from baselines import load_comments_and_labels, assemble_data, one_hot
-    from deep_learning import make_mlp, DenseTransformer
+    # from deep_learning import make_mlp, DenseTransformer
     from serialization import save_pipeline, load_pipeline
-    import diff_utils
     
     
 
