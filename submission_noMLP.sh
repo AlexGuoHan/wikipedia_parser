@@ -5,6 +5,6 @@
 #SBATCH --time=1-0
 
 module load python
-pip install -r requirements.txt --user
+pip3 install -r requirements.txt --user
 python3 sentiAnalysis_noMLP.py --wikiModelDir . --dataFileList dataFileList.txt --dataFileDir PARSED  --cpu 0
 
