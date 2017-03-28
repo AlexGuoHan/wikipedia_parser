@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task=40
 #SBATCH --time=1-0
 
-module load keras
+module load python
 pip install -r requirements.txt --user
 python3 sentiAnalysis_noMLP.py --wikiModelDir . --dataFileList dataFileList.txt --dataFileDir PARSED  --cpu 0
 
