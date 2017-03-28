@@ -1,5 +1,3 @@
-from __future__ import with_statement
-from __future__ import absolute_import
 import sys, os
 import joblib
 import pandas as pd
@@ -18,21 +16,20 @@ from keras.wrappers.scikit_learn import KerasClassifier
 
 import LoadData
 import CleanTextData
-from io import open
 
 
-class Stopwatch(object):
+class Stopwatch:
     start_time=None
-    def go(self,msg=u''):
+    def go(self,msg=''):
         if msg:
-            print msg,
+            print(msg),
         self.start_time=time.time()
         sys.stdout.flush()
-    def stop(self,msg=u''):
+    def stop(self,msg=''):
         if msg:
-            print u"{}: {} seconds".format(msg,time.time()-self.start_time)
+            print("{}: {} seconds".format(msg,time.time()-self.start_time))
         else:
-            print u"Elapsed time: {} seconds".format(time.time()-self.start_time)
+            print("Elapsed time: {} seconds".format(time.time()-self.start_time))
         sys.stdout.flush()
     def check(self):
         return time.time()-self.start_time
@@ -41,25 +38,25 @@ tic=Stopwatch()
 
 def argParser():
     parser = ArgumentParser()
-    parser.add_argument(u'--wikiModelDir', type=unicode,
-                        dest=u'wikiModelDir', 
-                        help=u'directory to wikiMedia models',
+    parser.add_argument('--wikiModelDir', type=str,
+                        dest='wikiModelDir', 
+                        help='directory to wikiMedia models',
                         required=True)
-    parser.add_argument(u'--trainDataDir', type=unicode, 
-                        dest=u'trainDataDir', 
-                        help=u'directory to training data', 
+    parser.add_argument('--trainDataDir', type=str, 
+                        dest='trainDataDir', 
+                        help='directory to training data', 
                         required=True)
-    parser.add_argument(u'--dataFileList', type=unicode, 
-                        dest=u'dataFileList', 
-                        help=u'directory to data file list', 
+    parser.add_argument('--dataFileList', type=str, 
+                        dest='dataFileList', 
+                        help='directory to data file list', 
                         required=True)
-    parser.add_argument(u'--dataFileDir', type=unicode, 
-                        dest=u'dataFileDir', 
-                        help=u'directory to the data',
+    parser.add_argument('--dataFileDir', type=str, 
+                        dest='dataFileDir', 
+                        help='directory to the data',
                         default=None)
-    parser.add_argument(u'--cpu', type=int,
-                        dest=u'cpu',
-                        help=u'number of cpu to deploy, 0 for max',
+    parser.add_argument('--cpu', type=int,
+                        dest='cpu',
+                        help='number of cpu to deploy, 0 for max',
                         required=True)
     return parser;
 
@@ -70,7 +67,7 @@ def main():
     args = parser.parse_args()
     
     wikiModelDir = args.wikiModelDir
-    # trainDataDir = args.trainDataDir
+    trainDataDir = args.trainDataDir
     dataFileList = args.dataFileList
     dataFileDir = args.dataFileDir
     num_cpus = args.cpu
@@ -78,32 +75,32 @@ def main():
     # load modules
     load_modules(wikiModelDir)
     
-    tic.go(u'LOADING MODELS')
+    tic.go('LOADING MODELS')
     
     # load losgistic model
     global logisticModel
     logisticModel = load_logistic_char_model(wikiModelDir)
     
     # load and train mlp model
-    # global mlpModel 
-    # mlpModel = load_mlp_char_model(wikiModelDir, trainDataDir)
+    global mlpModel 
+    mlpModel = load_mlp_char_model(wikiModelDir, trainDataDir)
     
     tic.stop()
     
     dataFiles = []
     # parallelize over multiple cpu
-    with open(dataFileList,u'r') as f:
+    with open(dataFileList,'r') as f:
             for line in f:
                 if(dataFileDir != None):
-                    dfile = os.path.join(dataFileDir, line.strip(u'\n'))
+                    dfile = os.path.join(dataFileDir, line.strip('\n'))
                     dataFiles.append(dfile)
                 else:
-                    dfile = line.strip(u'\n')
+                    dfile = line.strip('\n')
                     dataFiles.append(dfile)
-                assert os.path.exists(dfile), u'File Not Exist'
-    assert cpu_count() >= num_cpus,u'more cpu than available'
+                assert os.path.exists(dfile), 'File Not Exist'
+    assert cpu_count() >= num_cpus,'more cpu than available'
     if(num_cpus <= 0): num_cpus = cpu_counts()
-    print u'CPU: %d' % num_cpus
+    print('CPU: %d' % num_cpus)
     
     pool = Pool(num_cpus)
     pool.map(load_apply_save,dataFiles)
@@ -116,37 +113,38 @@ def main():
 def load_apply_save(dataDir):
     
     # load data
-    tic.go(u'LOADING & CLEANING DATA %s'%(dataDir))
-    raw_data = pd.read_csv(dataDir, sep=u'\t')
+    tic.go('LOADING & CLEANING DATA %s'%(dataDir))
+    raw_data = pd.read_csv(dataDir, sep='\t')
     [cleaned_data, cleaned_text_col] = clean_and_diff(raw_data)
     tic.stop()
     
     # apply two models
-    tic.go(u'APPLYING Logistic MODELS')
+    tic.go('APPLYING Logistic MODELS')
     cleaned_data = apply_models_DF(cleaned_data, 
-                                   u'logistic',
+                                   'logistic',
                                    logisticModel, 
                                    cleaned_text_col)
     tic.stop()
-    # tic.go(u'APPLYING MLP MODELS')
-    # cleaned_data = apply_models_DF(cleaned_data, 
-    #                                u'mlp', 
-    #                                mlpModel, 
-    #                                cleaned_text_col)
-    # tic.stop()
+    tic.go('APPLYING MLP MODELS')
+    cleaned_data = apply_models_DF(cleaned_data, 
+                                   'mlp', 
+                                   mlpModel, 
+                                   cleaned_text_col)
+    tic.stop()
     
     # save
     filename = os.path.basename(dataDir)
-    cleaned_data.to_csv(u'predicted_%s'%filename, sep=u'\t')
+    cleaned_data.to_csv('predicted_%s'%filename, sep='\t')
     
     
     
     
 
 def load_modules(wikiModelDir):
-    u''' This function will import modules based on wmModeiDir variable'''
-    assert os.path.exists(wikiModelDir), u'wikiModelDir Not Exist'
+    ''' This function will import modules based on wmModeiDir variable'''
+    assert os.path.exists(wikiModelDir), 'wikiModelDir Not Exist'
     
+    global ngram
     global load_comments_and_labels, assemble_data, one_hot
     global make_mlp, DenseTransformer
     global save_pipeline, load_pipeline
@@ -154,6 +152,7 @@ def load_modules(wikiModelDir):
     
     sys.path.append(os.path.join(wikiModelDir,u'wiki-detox/src/modeling'))
     sys.path.append(os.path.join(wikiModelDir,u'wiki-detox/src/data_generation'))
+    import ngram
     from baselines import load_comments_and_labels, assemble_data, one_hot
     from deep_learning import make_mlp, DenseTransformer
     from serialization import save_pipeline, load_pipeline
@@ -162,20 +161,20 @@ def load_modules(wikiModelDir):
     
 
 def load_logistic_char_model(wikiModelDir):
-    u''' Load and return the pretrained logistic character module '''
+    ''' Load and return the pretrained logistic character module '''
     
     # load pretrained model
     attackModelDir = os.path.join(wikiModelDir,
-        u'wiki-detox/app/models/attack_linear_char_oh_pipeline.pkl')
+        'wiki-detox/app/models/attack_linear_char_oh_pipeline.pkl')
     aggrModelDir = os.path.join(wikiModelDir,
-        u'wiki-detox/app/models/aggression_linear_char_oh_pipeline.pkl')
+        'wiki-detox/app/models/aggression_linear_char_oh_pipeline.pkl')
     
-    assert os.path.isfile(attackModelDir), u'Attack Model NOT found'
-    assert os.path.isfile(aggrModelDir), u'Aggression Model NOT found'
+    assert os.path.isfile(attackModelDir), 'Attack Model NOT found'
+    assert os.path.isfile(aggrModelDir), 'Aggression Model NOT found'
     
     return {
-        u'attackModel': joblib.load(attackModelDir),
-        u'aggrModel': joblib.load(aggrModelDir)
+        'attackModel': joblib.load(attackModelDir),
+        'aggrModel': joblib.load(aggrModelDir)
     }
     
     
@@ -183,14 +182,14 @@ def load_mlp_char_model(wikiModelDir, trainDataDir):
     
     # load best hyper-parameters
     cvResultsDir = os.path.join(wikiModelDir, 
-                     u'wiki-detox/src/modeling/cv_results.csv')
+                     'wiki-detox/src/modeling/cv_results.csv')
     
-    bestParams = load_best_params(cvResultsDir,u'mlp',u'char',u'ed')
+    bestParams = load_best_params(cvResultsDir,'mlp','char','ed')
     PIPELINE = Pipeline([
-                        (u'vect', CountVectorizer()),
-                        (u'tfidf', TfidfTransformer()),
-                        (u'to_dense', DenseTransformer()), 
-                        (u'clf', KerasClassifier(build_fn=make_mlp, 
+                        ('vect', CountVectorizer()),
+                        ('tfidf', TfidfTransformer()),
+                        ('to_dense', DenseTransformer()), 
+                        ('clf', KerasClassifier(build_fn=make_mlp, 
                                                 output_dim = 2, 
                                                 verbose=False))]) 
     PIPELINE.set_params(**bestParams)
@@ -201,19 +200,19 @@ def load_mlp_char_model(wikiModelDir, trainDataDir):
     attackModel = PIPELINE
     aggrModel = PIPELINE
     
-    attackModel.fit(trainData[u'attackTrainData'][u'X'],
-                    trainData[u'attackTrainData'][u'y'])
-    aggrModel.fit(trainData[u'aggrTrainData'][u'X'],
-                    trainData[u'aggrTrainData'][u'y'])
+    attackModel.fit(trainData['attackTrainData']['X'],
+                    trainData['attackTrainData']['y'])
+    aggrModel.fit(trainData['aggrTrainData']['X'],
+                    trainData['aggrTrainData']['y'])
 
     return {
-        u'attackModel': attackModel,
-        u'aggrModel': aggrModel
+        'attackModel': attackModel,
+        'aggrModel': aggrModel
     }
 
 
 def load_best_params(cv_results_dir, model_type, ngram_type, label_type):
-    u'''
+    '''
     Input:
     ======
     cv_result_dir: the directory to "cv_result" file of WikiMedia model
@@ -222,36 +221,36 @@ def load_best_params(cv_results_dir, model_type, ngram_type, label_type):
     import json
     
     cv_results = pd.read_csv(cv_results_dir)
-    query = u"model_type == \'%s\' and ngram_type == \'%s\' and label_type == \'%s\'" % (
+    query = "model_type == \'%s\' and ngram_type == \'%s\' and label_type == \'%s\'" % (
                                     model_type, ngram_type, label_type)
         
     params = cv_results.query(query)
-    params = params.loc[:,u'best_params'].iloc[0]
+    params = params.loc[:,'best_params'].iloc[0]
     return json.loads(params)
 
 
 def load_training_data(trainDataDir):
-    assert os.path.exists(trainDataDir), u'trainDataDir Not Exist'
+    assert os.path.exists(trainDataDir), 'trainDataDir Not Exist'
     attackTrainData = LoadData.load_and_parse_training(trainDataDir,
-                                                       u'attack',
-                                                       u'empirical')
+                                                       'attack',
+                                                       'empirical')
     aggrTrainData = LoadData.load_and_parse_training(trainDataDir,
-                                                     u'aggression',
-                                                     u'empirical')
+                                                     'aggression',
+                                                     'empirical')
     return {
-        u'attackTrainData': {
-                              u'X': attackTrainData[0],
-                              u'y': attackTrainData[1]
+        'attackTrainData': {
+                              'X': attackTrainData[0],
+                              'y': attackTrainData[1]
                             },
-        u'aggrTrainData':   {
-                              u'X': aggrTrainData[0],
-                              u'y': aggrTrainData[1]
+        'aggrTrainData':   {
+                              'X': aggrTrainData[0],
+                              'y': aggrTrainData[1]
                             }
     }
                                
 
 def get_diff(old, new, char_threshold = 5, ratio_threshold = 0.5):
-    u''' find diff using exhaustive search, not recommemded '''
+    ''' find diff using exhaustive search, not recommemded '''
     # find the lines with length > threshold characters
     old_lines = [o for o in old.splitlines() if len(o) > char_threshold] 
     new_lines = [n for n in new.splitlines() if len(n) > char_threshold]
@@ -263,11 +262,11 @@ def get_diff(old, new, char_threshold = 5, ratio_threshold = 0.5):
             append = SequenceMatcher(None, new_line, old_line).ratio() < ratio_threshold
             will_append = min(will_append,append)
         if(will_append is True): diff.append(new_line)
-    return u'\n'.join(diff)
+    return '\n'.join(diff)
 
 
-def clean_and_diff(data, method=u'quick_2', verbose=False):
-    u''' taking the diff and clean the text column
+def clean_and_diff(data, method='quick_2', verbose=False):
+    ''' taking the diff and clean the text column
     
     Return:
     =======
@@ -276,18 +275,18 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
     '''
     
     # Clean the data
-    assert u'title' in data.columns.tolist(), u'DataFrame format Incorrect'
-    assert u'text' in data.columns.tolist(), u'DataFrame format Incorrect'
+    assert 'title' in data.columns.tolist(), 'DataFrame format Incorrect'
+    assert 'text' in data.columns.tolist(), 'DataFrame format Incorrect'
     
     # use wikipedia's clean text data function
-    data = CleanTextData.clean_and_filter(data, text_col=u'text', min_words=0,  min_chars=0, exclude_tokens=False)
+    data = CleanTextData.clean_and_filter(data, text_col='text', min_words=0,  min_chars=0, exclude_tokens=False)
     
     # their function will produce some columns we dont need
-    data[u'clean_text'] = data[u'clean_diff']
-    data = data.drop([u'diff',u'clean_diff'],1)
+    data['clean_text'] = data['clean_diff']
+    data = data.drop(['diff','clean_diff'],1)
     
-    assert u'diff' not in data.columns.tolist()
-    assert u'clean_diff' not in data.columns.tolist()
+    assert 'diff' not in data.columns.tolist()
+    assert 'clean_diff' not in data.columns.tolist()
     
     
     titles = data.title.unique()
@@ -309,7 +308,7 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
             delta_byte = len(data.clean_text.iloc[idx])
             
         except KeyError:
-            text_diff = u''
+            text_diff = ''
             delta_byte = 0
             
         text_diffs.append(text_diff)
@@ -318,7 +317,7 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
         idx = idx + 1
        
         
-        for idx in xrange(idx, idx + data_subset.shape[0] - 1):
+        for idx in range(idx, idx + data_subset.shape[0] - 1):
             
             
             # the clean_and_filter() will delete rows that have 
@@ -338,7 +337,7 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
                 new = data.clean_text[idx]
             except KeyError:
                 if(verbose == True): # the new is empty, skip it
-                    print u'New is Empty, skipped, at %d'%idx
+                    print('New is Empty, skipped, at %d'%idx)
                 idx = idx + 1
                 continue
             
@@ -349,23 +348,23 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
                 # old is empty
                 # dont skip it, but make the old empty string
                 if(verbose == True):
-                    print u'Old is EMPTY %d'%idx
-                    old = u''
+                    print('Old is EMPTY %d'%idx)
+                    old = ''
 
                 
             # handle some exceptions
             
-            if(type(new) is not unicode):
+            if(type(new) is not str):
                 if(verbose == True):
-                    print u"text is not str: %s, changed to empty"%(new)
-                new = u''
-            if(type(old) is not unicode):
+                    print("text is not str: %s, changed to empty"%(new))
+                new = ''
+            if(type(old) is not str):
                 if(verbose == True):
-                    print u"text is not str: %s, changed to empty"%(old)
-                old = u''                
+                    print("text is not str: %s, changed to empty"%(old))
+                old = ''                
             
             assert len(new) > 0
-            assert type(text_diff) is unicode
+            assert type(text_diff) is str
             
 
             delta_byte = len(new) - len(old)
@@ -376,11 +375,11 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
                 
                 # note text_diffS = list for all text_diff
                 # text_diff is the diff for this example
-                text_diff = u'DELETED'
+                text_diff = 'DELETED'
             else:
                 # get the newly appended textx
                 # here ignore the (possibly) deleted texts for simplicity
-                if(method == u'quick_2'): 
+                if(method == 'quick_2'): 
                     text_diff = new[len(old):]
                 
             
@@ -407,17 +406,17 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
     
     for key, value in enumerate(data.index.tolist()):
         try:
-            data.loc[value, u'diff_clean_text'] = text_diffs[key]
-            data.loc[value,u'delta_bytes'] = delta_bytes[key]
+            data.loc[value, 'diff_clean_text'] = text_diffs[key]
+            data.loc[value,'delta_bytes'] = delta_bytes[key]
         except IndexError:
-            print len(text_diffs), len(cleaned_data.index.tolist())
+            print(len(text_diffs), len(cleaned_data.index.tolist()))
             raise
     
-    return data, u'diff_clean_text'
+    return data, 'diff_clean_text'
                                
     
 def apply_models_DF(df, model_name, model_dict, cleaned_text_col):
-    u''' Predict the probability of input data to be labelled
+    ''' Predict the probability of input data to be labelled
         'aggressive' or 'attack' using 
         
         Return:
@@ -429,11 +428,11 @@ def apply_models_DF(df, model_name, model_dict, cleaned_text_col):
     texts = df[cleaned_text_col]
     for task,model in model_dict.items():
         scores = model.predict_proba(texts)[:,1]
-        df[u'%s_%s_score'%(task, model_name)] = scores
+        df['%s_%s_score'%(task, model_name)] = scores
     return df
 
 def apply_models_text(text, model_dict):
-    u''' Predict the probability of input texts to be labelled
+    ''' Predict the probability of input texts to be labelled
         'aggressive' or 'attack'    
         
         Used for sanity check
@@ -441,12 +440,12 @@ def apply_models_text(text, model_dict):
 
     for task,model in model_dict.items():
         scores = model.predict_proba([text])[:,1]
-        print u'%s_score: %f'%(task,scores)
+        print('%s_score: %f'%(task,scores))
     
     
     
     
     
     
-if __name__ == u'__main__':
+if __name__ == '__main__':
     main()

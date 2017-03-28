@@ -8,6 +8,9 @@ then
 else
    echo "File $wmModel does not exist, downloading ..."
    git clone https://github.com/ewulczyn/wiki-detox.git
+
+   # wget https://pypi.python.org/pypi/3to2
+   # find wiki-detox -name '*.py' | xargs 3to2
 fi
 
 # check trainData
