@@ -104,8 +104,7 @@ def main():
     
     pool = Pool(num_cpus)
     pool.map(load_apply_save,dataFiles)
-    pool.join()
-    pool.close()
+
 
 
     
@@ -347,7 +346,7 @@ def clean_and_diff(data, method='quick_2', verbose=False):
                 # dont skip it, but make the old empty string
                 if(verbose == True):
                     print('Old is EMPTY %d'%idx)
-                    old = ''
+                old = ''
 
                 
             # handle some exceptions
