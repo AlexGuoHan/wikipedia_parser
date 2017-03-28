@@ -1,3 +1,5 @@
+scipy
+mwparserfromhell
 mwxml
 pandas
 BeautifulSoup4

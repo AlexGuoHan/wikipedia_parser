@@ -296,8 +296,8 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
     idx = 0
     
     # taking the diff for each title
-    # delta_byteS = a list for all ∆bytes
-    # delta_byte = ∆byte for this example
+    # delta_byteS = a list for all delta bytes
+    # delta_byte = delta byte for this example
     text_diffs = []
     delta_bytes = []
     
@@ -373,7 +373,7 @@ def clean_and_diff(data, method=u'quick_2', verbose=False):
             delta_byte = len(new) - len(old)
             
             if(delta_byte < 0):
-                # if ∆byte < 0, part of texts has been DELETED
+                # if delta byte < 0, part of texts has been DELETED
                 # append a EMPTY STR
                 
                 # note text_diffS = list for all text_diff
