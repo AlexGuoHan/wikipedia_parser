@@ -309,15 +309,18 @@ def clean_and_diff(data, method='quick_2', verbose=False):
             text_diff = data.clean_text[idx]
             delta_byte = len(data.clean_text[idx])
             
-            text_diffs.append(text_diff)
-            delta_bytes.append(delta_byte)
-            
         except KeyError:
-            pass
+            text_diff = ''
+            delta_byte = 0
+            
+        
+        
+        text_diffs.append(text_diff)
+        delta_bytes.append(delta_byte)
         
         idx = idx + 1
         
-        for idx in range(idx, idx + data_subset.index[-1] - 1):
+        for idx in range(idx, data_subset.index[-1]):
             
             
             # the clean_and_filter() will delete rows that have 
@@ -337,8 +340,8 @@ def clean_and_diff(data, method='quick_2', verbose=False):
                 new = data.clean_text[idx]
             except KeyError:
                 if(verbose == True): # the new is empty, skip it
-                    print('New is Empty, skipped, at %d'%idx)
-                continue
+                    print('New is Empty, at %d'%idx)
+                new = ''
             
             
             try: # test if old is empty
@@ -355,7 +358,7 @@ def clean_and_diff(data, method='quick_2', verbose=False):
             if(type(new) is not str):
                 if(verbose == True):
                     print("text is not str: %s, changed to empty"%(new))
-                continue
+                new = ''
             if(type(old) is not str):
                 if(verbose == True):
                     print("text is not str: %s, changed to empty"%(old))
