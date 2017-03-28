@@ -114,26 +114,27 @@ def load_apply_save(dataDir):
     # load data
     tic.go('LOADING & CLEANING DATA %s'%(dataDir))
     raw_data = pd.read_csv(dataDir, sep='\t')
-    [cleaned_data, cleaned_text_col] = clean_and_diff(raw_data, verbose=True)
+    [cleaned_data, cleaned_text_col, status] = clean_and_diff(raw_data, verbose=True)
     tic.stop()
     
-    # apply two models
-    tic.go('APPLYING Logistic MODELS')
-    cleaned_data = apply_models_DF(cleaned_data, 
-                                   'logistic',
-                                   logisticModel, 
-                                   cleaned_text_col)
-    tic.stop()
-    # tic.go('APPLYING MLP MODELS')
-    # cleaned_data = apply_models_DF(cleaned_data, 
-    #                                'mlp', 
-    #                                mlpModel, 
-    #                                cleaned_text_col)
-    # tic.stop()
-    
-    # save
-    filename = os.path.basename(dataDir)
-    cleaned_data.to_csv('predicted_%s'%filename, sep='\t')
+    if(status == 'non Empty'):
+        # apply two models
+        tic.go('APPLYING Logistic MODELS')
+        cleaned_data = apply_models_DF(cleaned_data, 
+                                       'logistic',
+                                       logisticModel, 
+                                       cleaned_text_col)
+        tic.stop()
+        # tic.go('APPLYING MLP MODELS')
+        # cleaned_data = apply_models_DF(cleaned_data, 
+        #                                'mlp', 
+        #                                mlpModel, 
+        #                                cleaned_text_col)
+        # tic.stop()
+
+        # save
+        filename = os.path.basename(dataDir)
+        cleaned_data.to_csv('predicted_%s'%filename, sep='\t')
     
     
     
@@ -276,7 +277,12 @@ def clean_and_diff(data, method='quick_2', verbose=False):
     assert 'text' in data.columns.tolist(), 'DataFrame format Incorrect'
     
     # use wikipedia's clean text data function
-    data = CleanTextData.clean_and_filter(data, text_col='text', min_words=0,  min_chars=0, exclude_tokens=False)
+    try:
+        data = CleanTextData.clean_and_filter(data, text_col='text', min_words=0,  min_chars=0, exclude_tokens=False)
+    except ValueError:
+        # when the file is empty (possible)
+        print('Empty File, skip')
+        return data, '', 'Empty'
     
     # their function will produce some columns we dont need
     data['clean_text'] = data['clean_diff']
@@ -402,7 +408,7 @@ def clean_and_diff(data, method='quick_2', verbose=False):
             print(len(text_diffs), len(data.index.tolist()))
             raise
     
-    return data, 'diff_clean_text'
+    return data, 'diff_clean_text', 'non Empty'
                                
     
 def apply_models_DF(df, model_name, model_dict, cleaned_text_col):
