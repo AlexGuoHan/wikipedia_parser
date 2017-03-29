@@ -268,8 +268,8 @@ def diff_clean_text(data):
     for row in data.iterrows():
         # row = [ [idx] [content] ]
         content = row[1]
-        assert 'title' in content.keys(), 'Data Format Error, now Title'
-        assert 'text' in content.keys(), 'Data Format Error, now Text'
+        assert 'title' in content.keys(), 'Data Format Error, no Title'
+        assert 'text' in content.keys(), 'Data Format Error, no Text'
 
         title = content['title']
         cleaned_text = clean_text(content['text'])
