@@ -14,7 +14,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 # from keras.wrappers.scikit_learn import KerasClassifier
 
 
-import LoadData
+# import LoadData
 import CleanTextData
 
 
@@ -104,8 +104,7 @@ def main():
     
     pool = Pool(num_cpus)
     pool.map(load_apply_save,dataFiles)
-    pool.join()
-    pool.close()
+
 
 
     
@@ -115,26 +114,27 @@ def load_apply_save(dataDir):
     # load data
     tic.go('LOADING & CLEANING DATA %s'%(dataDir))
     raw_data = pd.read_csv(dataDir, sep='\t')
-    [cleaned_data, cleaned_text_col] = clean_and_diff(raw_data)
+    [cleaned_data, cleaned_text_col, status] = clean_and_diff(raw_data, verbose=True)
     tic.stop()
     
-    # apply two models
-    tic.go('APPLYING Logistic MODELS')
-    cleaned_data = apply_models_DF(cleaned_data, 
-                                   'logistic',
-                                   logisticModel, 
-                                   cleaned_text_col)
-    tic.stop()
-    # tic.go('APPLYING MLP MODELS')
-    # cleaned_data = apply_models_DF(cleaned_data, 
-    #                                'mlp', 
-    #                                mlpModel, 
-    #                                cleaned_text_col)
-    # tic.stop()
-    
-    # save
-    filename = os.path.basename(dataDir)
-    cleaned_data.to_csv('predicted_%s'%filename, sep='\t')
+    if(status == 'non Empty'):
+        # apply two models
+        tic.go('APPLYING Logistic MODELS')
+        cleaned_data = apply_models_DF(cleaned_data, 
+                                       'logistic',
+                                       logisticModel, 
+                                       cleaned_text_col)
+        tic.stop()
+        # tic.go('APPLYING MLP MODELS')
+        # cleaned_data = apply_models_DF(cleaned_data, 
+        #                                'mlp', 
+        #                                mlpModel, 
+        #                                cleaned_text_col)
+        # tic.stop()
+
+        # save
+        filename = os.path.basename(dataDir)
+        cleaned_data.to_csv('predicted_%s'%filename, sep='\t')
     
     
     
@@ -146,17 +146,15 @@ def load_modules(wikiModelDir):
     
     global ngram
     global load_comments_and_labels, assemble_data, one_hot
-    global make_mlp, DenseTransformer
+    # global make_mlp, DenseTransformer
     global save_pipeline, load_pipeline
-    global diff_utils
     
     sys.path.append(os.path.join(wikiModelDir,u'wiki-detox/src/modeling'))
     sys.path.append(os.path.join(wikiModelDir,u'wiki-detox/src/data_generation'))
     import ngram
     from baselines import load_comments_and_labels, assemble_data, one_hot
-    from deep_learning import make_mlp, DenseTransformer
+    # from deep_learning import make_mlp, DenseTransformer
     from serialization import save_pipeline, load_pipeline
-    import diff_utils
     
     
 
@@ -279,7 +277,12 @@ def clean_and_diff(data, method='quick_2', verbose=False):
     assert 'text' in data.columns.tolist(), 'DataFrame format Incorrect'
     
     # use wikipedia's clean text data function
-    data = CleanTextData.clean_and_filter(data, text_col='text', min_words=0,  min_chars=0, exclude_tokens=False)
+    try:
+        data = CleanTextData.clean_and_filter(data, text_col='text', min_words=0,  min_chars=0, exclude_tokens=False)
+    except ValueError:
+        # when the file is empty (possible)
+        print('Empty File, skip')
+        return data, '', 'Empty'
     
     # their function will produce some columns we dont need
     data['clean_text'] = data['clean_diff']
@@ -301,23 +304,23 @@ def clean_and_diff(data, method='quick_2', verbose=False):
     for title in titles:
         
         data_subset = data[data.title == title]
-        at_start = True
         
         try:
             text_diff = data.clean_text[idx]
-            delta_byte = len(data.clean_text.iloc[idx])
+            delta_byte = len(data.clean_text[idx])
             
         except KeyError:
             text_diff = ''
             delta_byte = 0
             
+        
+        
         text_diffs.append(text_diff)
         delta_bytes.append(delta_byte)
         
         idx = idx + 1
-       
         
-        for idx in range(idx, idx + data_subset.shape[0] - 1):
+        for idx in range(idx, data_subset.index[-1]):
             
             
             # the clean_and_filter() will delete rows that have 
@@ -337,9 +340,8 @@ def clean_and_diff(data, method='quick_2', verbose=False):
                 new = data.clean_text[idx]
             except KeyError:
                 if(verbose == True): # the new is empty, skip it
-                    print('New is Empty, skipped, at %d'%idx)
-                idx = idx + 1
-                continue
+                    print('New is Empty, at %d'%idx)
+                new = ''
             
             
             try: # test if old is empty
@@ -349,8 +351,7 @@ def clean_and_diff(data, method='quick_2', verbose=False):
                 # dont skip it, but make the old empty string
                 if(verbose == True):
                     print('Old is EMPTY %d'%idx)
-                    old = ''
-
+                old = ''
                 
             # handle some exceptions
             
@@ -363,7 +364,7 @@ def clean_and_diff(data, method='quick_2', verbose=False):
                     print("text is not str: %s, changed to empty"%(old))
                 old = ''                
             
-            assert len(new) > 0
+            # assert len(new) > 0
             assert type(text_diff) is str
             
 
@@ -399,8 +400,6 @@ def clean_and_diff(data, method='quick_2', verbose=False):
             delta_bytes.append(delta_byte)
             text_diffs.append(text_diff)
             
-            if at_start : at_start = False
-            
         
         idx = idx + 1
     
@@ -409,10 +408,10 @@ def clean_and_diff(data, method='quick_2', verbose=False):
             data.loc[value, 'diff_clean_text'] = text_diffs[key]
             data.loc[value,'delta_bytes'] = delta_bytes[key]
         except IndexError:
-            print(len(text_diffs), len(cleaned_data.index.tolist()))
+            print(len(text_diffs), len(data.index.tolist()))
             raise
     
-    return data, 'diff_clean_text'
+    return data, 'diff_clean_text', 'non Empty'
                                
     
 def apply_models_DF(df, model_name, model_dict, cleaned_text_col):
