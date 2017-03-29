@@ -1,7 +1,7 @@
 import sys,os
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.cross_validation import train_test_split
 sys.path.append('ClonedModel/wmModel/wiki-detox/src/modeling/')
 
 
