@@ -5,6 +5,6 @@
 #SBATCH --time=1-0
 
 module load keras
-pip install -r requirements.txt --user
-python sentiAnalysis.py --wikiModelDir wikiModel --trainDataDir trainData --dataFileList dataFileList.txt --dataFileDir PARSED  --cpu 0
+pip3 install -r requirements.txt --user
+python3 sentiAnalysis.py --wikiModelDir wikiModel --trainDataDir trainData --dataFileList dataFileList.txt --dataFileDir PARSED  --cpu 0
 
