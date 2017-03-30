@@ -99,7 +99,7 @@ def main():
                     dataFiles.append(dfile)
                 assert os.path.exists(dfile), 'File Not Exist'
     assert cpu_count() >= num_cpus,'more cpu than available'
-    if(num_cpus <= 0): num_cpus = cpu_counts()
+    if(num_cpus <= 0): num_cpus = cpu_count()
     print('CPU: %d' % num_cpus)
     
     pool = Pool(num_cpus)
