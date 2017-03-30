@@ -6,5 +6,5 @@
 
 module load keras
 pip3 install -r requirements.txt --user
-python3 sentiAnalysis.py --wikiModelDir wikiModel --trainDataDir trainData --dataFileList dataFileList.txt --dataFileDir PARSED  --cpu 0
+python3 sentiAnalysis.py --wikiModelDir . --trainDataDir trainData --dataFileList dataFileList.txt --dataFileDir PARSED  --cpu 0
 

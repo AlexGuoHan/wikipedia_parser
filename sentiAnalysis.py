@@ -225,9 +225,7 @@ def load_best_params(cv_results_dir, model_type, ngram_type, label_type):
     import json
     
     cv_results = pd.read_csv(cv_results_dir)
-    query = """model_type == \'%s\' and 
-                ngram_type == \'%s\' and 
-                label_type == \'%s\'""" %(
+    query = "model_type == \'%s\' and ngram_type == \'%s\' and label_type == \'%s\'" %(
                 model_type, ngram_type, label_type)
         
     params = cv_results.query(query)

@@ -1,3 +1,4 @@
+numexpr
 tensorflow
 keras
 seaborn
