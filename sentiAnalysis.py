@@ -120,8 +120,8 @@ def load_apply_save(dataDir):
     
     # if(status == 'non Empty'):
     
-    assert 'Added' in cleaned_data.columns(), 'Data Format Error, no Added'
-    assert 'Deleted' in cleaned_data.columns(), 'Data Format Error, no Deleted'
+    assert 'Added' in cleaned_data.columns, 'Data Format Error, no Added'
+    assert 'Deleted' in cleaned_data.columns, 'Data Format Error, no Deleted'
         
     # apply two models
     tic.go('APPLYING Logistic MODELS')
