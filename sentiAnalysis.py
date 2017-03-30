@@ -115,7 +115,7 @@ def load_apply_save(dataDir):
     # load data
     tic.go('LOADING & CLEANING DATA %s'%(dataDir))
     raw_data = pd.read_csv(dataDir, sep='\t')
-    cleaned_data = diff_clean_text(raw_data, verbose=True)
+    cleaned_data = diff_clean_text(raw_data)
     tic.stop()
     
     # if(status == 'non Empty'):
