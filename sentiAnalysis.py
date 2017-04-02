@@ -146,6 +146,8 @@ def load_apply_save(dataDir, outDir='outputFiles'):
     tic.stop()
 
     # save
+    if(os.path.isdir(dataDir) == False): 
+        os.makedirs(dataDir)
     filename = os.path.basename(dataDir)
     cleaned_data.to_csv(
        os.path.join(outDir,
