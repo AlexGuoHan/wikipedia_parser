@@ -100,7 +100,12 @@ def main():
                     # dataFiles.append(dfile)
                 assert os.path.exists(dfile), 'File Not Exist'
     
-    load_apply_save(dfile)
+    try:
+        load_apply_save(dfile)
+    except ValueError:
+        # the file is empty
+        # simply skip it
+        pass
     
     '''
     # pool = Pool(num_cpus)
