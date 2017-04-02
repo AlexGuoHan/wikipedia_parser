@@ -1,4 +1,5 @@
 #! /bin.bash
+#SBATCH -o file$SLURM_ARRAY_TASK_ID
 #SBATCH --array=1-216
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
