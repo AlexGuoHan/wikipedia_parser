@@ -1,6 +1,6 @@
 #! /bin/bash
 #SBATCH --array=1-216
-#SBATCH -o slurmOut/
+#SBATCH -o slurmOut
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH -t 02:00
