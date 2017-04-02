@@ -1,6 +1,6 @@
 #! /bin/bash
 #SBATCH --array=1-216
-#SBATCH -o slurmOut/file$SLURM_ARRAY_TASK_ID
+#SBATCH -o slurmOut/
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH -t 02:00
@@ -9,4 +9,4 @@
 #SBATCH --mem-per-cpu=20g
 
 module load python
-python3 sentiAnalysis.py --wikiModelDir . --dataFileList dataFileArray/dataFileArray$SLURM_ARRAY_TASK_ID.txt --dataFileDir PARSED
+python3 sentiAnalysis.py --wikiModelDir . --trainDataDir trainData --dataFileList dataFileArray/dataFileArray$SLURM_ARRAY_TASK_ID.txt --dataFileDir PARSED
