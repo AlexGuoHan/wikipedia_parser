@@ -7,10 +7,7 @@ sh getJobInfo.sh past | grep -v COMPLETED | grep -v batch | cut -c9-12 | grep -v
 idx=0
 for id in `cat tmp_failed_jobid.txt`
 do
-    if [ $id -lt 216 ]
-    then
-        cat dataFileArray/dataFileArray$id.txt >> dataFailFileArray/dataFileArray$idx.txt
-    fi
+    cat dataFileArray/dataFileArray$id.txt >> dataFailFileArray/dataFileArray$idx.txt
     idx=$(($idx + 1))
 done
 
