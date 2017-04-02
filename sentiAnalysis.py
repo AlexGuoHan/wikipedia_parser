@@ -362,7 +362,7 @@ def apply_models_DF(data, model_name, model_dict, cleaned_text_cols):
             scores = model.predict_proba(texts)[:,1]
             data['%s_%s_%s_score'%(col, task, model_name)] = scores
 
-        return data
+    return data
 
 def apply_models_text(text, model_dict):
     ''' Predict the probability of input texts to be labelled
