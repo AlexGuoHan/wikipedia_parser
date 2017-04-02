@@ -1,6 +1,6 @@
-#!/bin.bash
-#SBATCH -o file$SLURM_ARRAY_TASK_ID
+#! /bin/bash
 #SBATCH --array=1-216
+#SBATCH -o slurmOut/file$SLURM_ARRAY_TASK_ID
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH -t 02:00
