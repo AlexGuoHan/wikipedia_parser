@@ -144,7 +144,7 @@ def load_apply_save(dataDir, outDir='outputFiles'):
                                     mlpModel, 
                                     ['Added', 'Deleted'])
     tic.stop()
-
+    
     # save
     if(os.path.isdir(outDir) == False): 
         os.makedirs(outDir)
@@ -158,7 +158,7 @@ def load_apply_save(dataDir, outDir='outputFiles'):
     
 
 def load_modules(wikiModelDir):
-    ''' This function will import modules based on wmModeiDir variable'''
+    ''' This function will import modules based on wmModeiDir variable '''
     assert os.path.exists(wikiModelDir), 'wikiModelDir Not Exist'
     
     global ngram
