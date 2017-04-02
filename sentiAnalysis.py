@@ -54,10 +54,6 @@ def argParser():
                         dest='dataFileDir', 
                         help='directory to the data',
                         default=None)
-    parser.add_argument('--cpu', type=int,
-                        dest='cpu',
-                        help='number of cpu to deploy, 0 for max',
-                        required=True)
     return parser;
 
 
@@ -70,13 +66,18 @@ def main():
     trainDataDir = args.trainDataDir
     dataFileList = args.dataFileList
     dataFileDir = args.dataFileDir
-    num_cpus = args.cpu
     
     # load modules
     load_modules(wikiModelDir)
     
-    tic.go('LOADING MODELS')
+
+    ''' 
+        using global variable is not a good practice,
+        however, the module was designed for multiprocess,
+        where one can supply only one input
+    '''
     
+    tic.go('LOADING MODELS')
     # load losgistic model
     global logisticModel
     logisticModel = load_logistic_char_model(wikiModelDir)
@@ -87,30 +88,30 @@ def main():
     
     tic.stop()
     
-    dataFiles = []
-    # parallelize over multiple cpu
+    # dataFiles = []
+    # parallelize over multiple cpu (not now)
     with open(dataFileList,'r') as f:
             for line in f:
                 if(dataFileDir != None):
                     dfile = os.path.join(dataFileDir, line.strip('\n'))
-                    dataFiles.append(dfile)
+                    # dataFiles.append(dfile)
                 else:
                     dfile = line.strip('\n')
-                    dataFiles.append(dfile)
+                    # dataFiles.append(dfile)
                 assert os.path.exists(dfile), 'File Not Exist'
-    assert cpu_count() >= num_cpus,'more cpu than available'
-    if(num_cpus <= 0): num_cpus = cpu_count()
-    print('CPU: %d' % num_cpus)
     
-    pool = Pool(num_cpus)
-    pool.map(load_apply_save,dataFiles)
+    load_apply_save(dfile)
+    
+    '''
+    # pool = Pool(num_cpus)
+    # pool.map(load_apply_save,dataFiles)
     # pool.join()
     # pool.close()
-
+    '''
 
     
 
-def load_apply_save(dataDir):
+def load_apply_save(dataDir, outDir='outputFiles'):
     
     # load data
     tic.go('LOADING & CLEANING DATA %s'%(dataDir))
@@ -141,7 +142,10 @@ def load_apply_save(dataDir):
 
     # save
     filename = os.path.basename(dataDir)
-    cleaned_data.to_csv('predicted_%s'%filename, sep='\t')
+    cleaned_data.to_csv(
+       os.path.join(outDir,
+                    'predicted_%s'%filename
+                   ), sep='\t')
 
     
     
