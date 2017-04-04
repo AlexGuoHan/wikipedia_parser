@@ -141,7 +141,7 @@ def load_apply_save(dataDir, outDir='outputFiles', chunksize=None):
     for raw_data in pd.read_csv(dataDir, sep='\t', chunksize=chunksize):
 
         [_cleaned_data, new_item] = diff_clean_text(raw_data, last_item)
-        cleaned_data.append(_cleaned_data)
+        cleaned_data = cleaned_data.append(_cleaned_data)
         last_item = new_item
 
 
