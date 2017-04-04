@@ -9,4 +9,4 @@
 #SBATCH --mem-per-cpu=20g
 
 module load python
-python3 sentiAnalysis.py --wikiModelDir . --trainDataDir trainData --dataFileList dataFailedFileArray/dataFailedFileArray$SLURM_ARRAY_TASK_ID.txt --dataFileDir PARSED
+python3 sentiAnalysis.py --wikiModelDir . --trainDataDir trainData --dataFileList dataFailedFileArray/dataFailedFileArray$SLURM_ARRAY_TASK_ID.txt --dataFileDir PARSED --chunksize 2000
