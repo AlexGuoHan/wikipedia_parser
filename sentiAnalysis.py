@@ -54,6 +54,10 @@ def argParser():
                         dest='dataFileDir', 
                         help='directory to the data',
                         default=None)
+    parser.add_argument('--chunksize', type=str, 
+                        dest='chunksize', 
+                        help='chunksize when working with large data',
+                        default=None)
     return parser;
 
 
@@ -66,6 +70,7 @@ def main():
     trainDataDir = args.trainDataDir
     dataFileList = args.dataFileList
     dataFileDir = args.dataFileDir
+    chunksize = args.chunksize
     
     # load modules
     load_modules(wikiModelDir)
@@ -101,7 +106,10 @@ def main():
                 assert os.path.exists(dfile), 'File Not Exist'
     
     try:
-        load_apply_save(dfile)
+        if(chunksize == None):
+            load_apply_save(dfile)
+        else:
+            load_apply_save_large(dfile, chunksize=chunksize) 
     except ValueError:
         # the file is empty
         # simply skip it
