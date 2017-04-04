@@ -1,4 +1,5 @@
-import sys, os
+import sys
+import os
 import joblib
 import pandas as pd
 
@@ -19,46 +20,51 @@ import CleanTextData
 
 
 class Stopwatch:
-    start_time=None
-    def go(self,msg=''):
+    start_time = None
+
+    def go(self, msg=''):
         if msg:
             print(msg),
-        self.start_time=time.time()
+        self.start_time = time.time()
         sys.stdout.flush()
-    def stop(self,msg=''):
+
+    def stop(self, msg=''):
         if msg:
-            print("{}: {} seconds".format(msg,time.time()-self.start_time))
+            print("{}: {} seconds".format(msg, time.time() - self.start_time))
         else:
-            print("Elapsed time: {} seconds".format(time.time()-self.start_time))
+            print("Elapsed time: {} seconds".format(time.time() - self.start_time))
         sys.stdout.flush()
+
     def check(self):
-        return time.time()-self.start_time
-tic=Stopwatch()
+        return time.time() - self.start_time
+
+
+tic = Stopwatch()
 
 
 def argParser():
     parser = ArgumentParser()
     parser.add_argument('--wikiModelDir', type=str,
-                        dest='wikiModelDir', 
+                        dest='wikiModelDir',
                         help='directory to wikiMedia models',
                         required=True)
-    parser.add_argument('--trainDataDir', type=str, 
-                        dest='trainDataDir', 
-                        help='directory to training data', 
+    parser.add_argument('--trainDataDir', type=str,
+                        dest='trainDataDir',
+                        help='directory to training data',
                         required=True)
-    parser.add_argument('--dataFileList', type=str, 
-                        dest='dataFileList', 
-                        help='directory to data file list', 
+    parser.add_argument('--dataFileList', type=str,
+                        dest='dataFileList',
+                        help='directory to data file list',
                         required=True)
-    parser.add_argument('--dataFileDir', type=str, 
-                        dest='dataFileDir', 
+    parser.add_argument('--dataFileDir', type=str,
+                        dest='dataFileDir',
                         help='directory to the data',
                         default=None)
-    parser.add_argument('--chunksize', type=str, 
-                        dest='chunksize', 
+    parser.add_argument('--chunksize', type=str,
+                        dest='chunksize',
                         help='chunksize when working with large data',
                         default=None)
-    return parser;
+    return parser
 
 
 
@@ -88,7 +94,7 @@ def main():
     logisticModel = load_logistic_char_model(wikiModelDir)
     
     # load and train mlp model
-    global mlpModel 
+    global mlpModel
     mlpModel = load_mlp_char_model(wikiModelDir, trainDataDir)
     
     tic.stop()
@@ -106,10 +112,8 @@ def main():
                 assert os.path.exists(dfile), 'File Not Exist'
     
     try:
-        if(chunksize == None):
-            load_apply_save(dfile)
-        else:
-            load_apply_save_large(dfile, chunksize=chunksize) 
+        load_apply_save(dfile, chunksize=chunksize)
+
     except ValueError:
         # the file is empty
         # simply skip it
@@ -124,43 +128,51 @@ def main():
 
     
 
-def load_apply_save(dataDir, outDir='outputFiles'):
-    
+def load_apply_save(dataDir, outDir='outputFiles', chunksize=None):
     # load data
-    tic.go('LOADING & CLEANING DATA %s'%(dataDir))
-    raw_data = pd.read_csv(dataDir, sep='\t')
-    cleaned_data = diff_clean_text(raw_data)
+    # when the file is large, 
+    # we will read it chunk by chunk
+
+    tic.go('LOADING & CLEANING DATA %s' % (dataDir))
+
+    # last_item are the last entry in the previous chunk
+    last_item = None
+    cleaned_data = pd.DataFrame()
+    for raw_data in pd.read_csv(dataDir, sep='\t', chunksize=chunksize):
+
+        [_cleaned_data, new_item] = diff_clean_text(raw_data, last_item)
+        cleaned_data.append(_cleaned_data)
+        last_item = new_item
+
+
     tic.stop()
-    
-    # if(status == 'non Empty'):
-    
     assert 'Added' in cleaned_data.columns, 'Data Format Error, no Added'
     assert 'Deleted' in cleaned_data.columns, 'Data Format Error, no Deleted'
-        
+
     # apply two models
     tic.go('APPLYING Logistic MODELS')
-    cleaned_data = apply_models_DF(cleaned_data, 
-                                   'logistic',
-                                   logisticModel, 
+    cleaned_data = apply_models_DF(cleaned_data,
+                                    'logistic',
+                                   logisticModel,
                                    ['Added', 'Deleted'])
     
     tic.stop()
     
     tic.go('APPLYING MLP MODELS')
-    cleaned_data = apply_models_DF(cleaned_data, 
-                                    'mlp', 
-                                    mlpModel, 
-                                    ['Added', 'Deleted'])
+    cleaned_data = apply_models_DF(cleaned_data,
+                                     'mlp',
+                                     mlpModel,
+                                     ['Added', 'Deleted'])
     tic.stop()
     
     # save
-    if(os.path.isdir(outDir) == False): 
+    if(os.path.isdir(outDir) is False):
         os.makedirs(outDir)
     filename = os.path.basename(dataDir)
     cleaned_data.to_csv(
-       os.path.join(outDir,
-                    'predicted_%s'%filename
-                   ), sep='\t')
+        os.path.join(outDir,
+                     'predicted_%s' % filename
+                     ), sep='\t')
 
     
     
@@ -174,8 +186,8 @@ def load_modules(wikiModelDir):
     global make_mlp, DenseTransformer
     global save_pipeline, load_pipeline
     
-    sys.path.append(os.path.join(wikiModelDir,u'wiki-detox/src/modeling'))
-    sys.path.append(os.path.join(wikiModelDir,u'wiki-detox/src/data_generation'))
+    sys.path.append(os.path.join(wikiModelDir, u'wiki-detox/src/modeling'))
+    sys.path.append(os.path.join(wikiModelDir, u'wiki-detox/src/data_generation'))
     import ngram
     from baselines import load_comments_and_labels, assemble_data, one_hot
     from deep_learning import make_mlp, DenseTransformer
@@ -204,17 +216,17 @@ def load_logistic_char_model(wikiModelDir):
 def load_mlp_char_model(wikiModelDir, trainDataDir):
     
     # load best hyper-parameters
-    cvResultsDir = os.path.join(wikiModelDir, 
+    cvResultsDir = os.path.join(wikiModelDir,
                      'wiki-detox/src/modeling/cv_results.csv')
     
-    bestParams = load_best_params(cvResultsDir,'mlp','char','ed')
+    bestParams = load_best_params(cvResultsDir, 'mlp', 'char', 'ed')
     PIPELINE = Pipeline([
                         ('vect', CountVectorizer()),
                         ('tfidf', TfidfTransformer()),
-                        ('to_dense', DenseTransformer()), 
-                        ('clf', KerasClassifier(build_fn=make_mlp, 
-                                                output_dim = 2, 
-                                                verbose=False))]) 
+                        ('to_dense', DenseTransformer()),
+                        ('clf', KerasClassifier(build_fn=make_mlp,
+                                                output_dim=2,
+                                                verbose=False))])
     PIPELINE.set_params(**bestParams)
     
     # train models
@@ -244,7 +256,7 @@ def load_best_params(cv_results_dir, model_type, ngram_type, label_type):
     import json
     
     cv_results = pd.read_csv(cv_results_dir)
-    query = "model_type == \'%s\' and ngram_type == \'%s\' and label_type == \'%s\'" %(
+    query = "model_type == \'%s\' and ngram_type == \'%s\' and label_type == \'%s\'" % (
                 model_type, ngram_type, label_type)
         
     params = cv_results.query(query)
@@ -273,9 +285,20 @@ def load_training_data(trainDataDir):
                                
 
 
-def diff_clean_text(data):
+def diff_clean_text(data, last_item):
     ''' Taking the difference between two history version '''
     
+    # load the last item
+    try:
+        title_prev = last_item['title']
+        cleaned_text_prev = last_item['text']
+    except TypeError:
+        # the last item is empty
+        # this means there is no last item to compare with
+        # simply ignore it
+        pass
+
+
     Differ = difflib.Differ()
     ADDED = []
     ADDED_bytes = []
@@ -295,7 +318,7 @@ def diff_clean_text(data):
         try:
             if(title == title_prev):
                 diff = list(Differ.compare(
-                            cleaned_text_prev.split(), 
+                            cleaned_text_prev.split(),
                             cleaned_text.split()
                             ))
 
@@ -326,13 +349,14 @@ def diff_clean_text(data):
 
         title_prev = title
         cleaned_text_prev = cleaned_text
+        last_item = content
         
     data['Added'] = ADDED
     data['Added_Bytes'] = ADDED_bytes
     data['Deleted'] = DELETED
     data['Deleted_Bytes'] = DELETED_bytes
     
-    return data
+    return data, last_item
 
 
 def clean_text(text):
