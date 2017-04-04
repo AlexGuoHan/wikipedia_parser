@@ -60,7 +60,7 @@ def argParser():
                         dest='dataFileDir',
                         help='directory to the data',
                         default=None)
-    parser.add_argument('--chunksize', type=str,
+    parser.add_argument('--chunksize', type=int,
                         dest='chunksize',
                         help='chunksize when working with large data',
                         default=None)
