@@ -9,4 +9,5 @@
 #SBATCH --mem-per-cpu=20g
 
 module load python
+pip3 install -r requirements.txt --user
 python3 sentiAnalysis.py --wikiModelDir . --trainDataDir trainData --dataFileList dataFileArray/dataFileArray$SLURM_ARRAY_TASK_ID.txt --dataFileDir PARSED
