@@ -1,5 +1,5 @@
 #! /bin/bash
-#SBATCH --array=1-31
+#SBATCH --array=0-29
 #SBATCH -o slurmOut
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
@@ -9,4 +9,4 @@
 #SBATCH --mem-per-cpu=20g
 
 module load python
-python3 sentiAnalysis.py --wikiModelDir . --trainDataDir trainData --dataFileList dataFailedFileArray/dataFailedFileArray$SLURM_ARRAY_TASK_ID.txt --dataFileDir PARSED --chunksize 2000
+python3 sentiAnalysis.py --wikiModelDir . --trainDataDir trainData --dataFileList dataFailFileArray/dataFailFileArray$SLURM_ARRAY_TASK_ID.txt --dataFileDir PARSED --chunksize 2000
