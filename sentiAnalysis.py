@@ -69,7 +69,7 @@ def argParser():
     parser.add_argument('--nworker', type=int,
                         dest='nworker',
                         help='number of workers in multiprocess, 0 for max',
-                        default=None)
+                        required=True)
     return parser
 
 
